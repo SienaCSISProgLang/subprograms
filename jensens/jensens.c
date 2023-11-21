@@ -12,7 +12,7 @@
 
 /* macro to implement Jensen's device */
 
-#define SUM(Expr,Term, Lbound,Ubound, Inc, Total) \
+#define SUM(Expr,Term,Lbound,Ubound,Inc,Total) \
   for(Total = 0, Term = Lbound; Term <= Ubound; Term += Inc)\
     Total += (Expr)
 

@@ -13,7 +13,7 @@ using namespace std;
 
 // we provide default values for parameters should they be
 // omitted in the call
-int optional(int x, int y = 2, int z = 7) {
+void optional(int x, int y = 2, int z = 7) {
 
   cout << "x=" << x << ", y=" << y << ", z=" << z << endl;
   
