@@ -1,10 +1,14 @@
 /*
-  Examples of usage of the qsort function from the C standard library.
-
+  Demonstrations of general-purpose sorting in C
+  
+  Based on: sxamples of usage of the qsort function from the C standard library.
   Jim Teresco, CSC 381, The College of Saint Rose, Fall 2013
 
   Initial implementation:
   Sat Nov  9 13:08:41 EST 2013
+
+  Expanded to other sorting for
+  CSIS-340, Siena College, Fall 2023
 */
 
 #include <stdio.h>
@@ -27,13 +31,13 @@ enum criteria { DEFAULT, LENGTH, CASEINSENSITIVE, NUMERATOR };
    that something isn't right on the command line */
 static void usage(char *program) {
   printf("Usage: %s [--filename filename] [--datatype numeric|string|ratio] [--reverse]\n", program);
-  printf("[--criteria length|case-insensitive|numerator] [--verbose] [--help]\n");
+  printf("[--criteria length|case-insensitive|numerator] [--algorithm insertion|merge|quick|heap]\n");
+  printf("[--verbose] [--help]\n");
 }
 
 /***********************************************************************/
 /*  COMPARATOR FUNCTIONS                                               */
 /***********************************************************************/
-
 
 /* compare two int values, standard order */
 int intcmp(const void *i1, const void *i2) {
@@ -118,7 +122,6 @@ int stringcmpnocaserev(const void *s1, const void *s2) {
 
 }
 
-
 /*  string compare by length */
 int stringcmplength(const void *s1, const void *s2) {
 
@@ -138,7 +141,6 @@ int stringcmplengthrev(const void *s1, const void *s2) {
   return strlen(str2) - strlen(str1);
 
 }
-
 
 /* standard ratio comparison */
 int ratiocmp(const void *rat1, const void *rat2) {
@@ -202,7 +204,6 @@ int main(int argc, char *argv[]) {
   enum datatypes datatype = NUMERIC;
   enum criteria criterion = DEFAULT;
 
-
   /* variable needed for getopt_long */
   int ch;
 
@@ -213,6 +214,7 @@ int main(int argc, char *argv[]) {
     { "datatype", required_argument, NULL, 'd' },
     { "reverse", no_argument, NULL, 'r' },
     { "criteria", required_argument, NULL, 'c' },
+    { "algorithm", required_argument, NULL, 'a'},
     { "help", no_argument, NULL, 'h' },
     { "verbose", no_argument, NULL, 'v' },
     { 0, 0, 0, 0 }
@@ -235,15 +237,18 @@ int main(int argc, char *argv[]) {
   int item;
   int num, den;
 
-  /* pointer to the needed sort function */
-  int (*sortfunc)(const void *, const void *);
+  /* pointer to the needed comparator function */
+  int (*compfunc)(const void *, const void *);
+
+  /* pointer to the sort function, default is qsort */
+  void (*sortfunc)(void *, size_t, size_t, int (*)(const void *, const void *))= qsort;
 
   /* process command-line parameters */
   /* the string here has the short option names, which are followed
      by a colon if they take a parameter, no colon if they are standalone */
   /* if an value exists after the option, it is specified in char *optarg */
-  while ((ch = getopt_long(argc, argv, "f:d:rc:hv", 
-			   longopts, &option_index)) != -1) {
+  while ((ch = getopt_long(argc, argv, "f:d:rc:a:hv", 
+         longopts, &option_index)) != -1) {
     switch (ch) {
 
     case 'f':
@@ -254,34 +259,54 @@ int main(int argc, char *argv[]) {
     case 'd':
       /* datatype */
       if (strcmp(optarg, "numeric") == 0) {
-	datatype = NUMERIC;
+        datatype = NUMERIC;
       }
       else if (strcmp(optarg, "string") == 0) {
-	datatype = STRING;
+        datatype = STRING;
       }
       else if (strcmp(optarg, "ratio") == 0) {
-	datatype = RATIO;
+        datatype = RATIO;
       }
       else {
-	usage(argv[0]);
-	return 1;
+        usage(argv[0]);
+        return 1;
       }
       break;
 
     case 'c':
       /* criteria -- should do better error checking */
       if (strcmp(optarg, "length") == 0) {
-	criterion = LENGTH;
+        criterion = LENGTH;
       }
       else if (strcmp(optarg, "case-insensitive") == 0) {
-	criterion = CASEINSENSITIVE;
+        criterion = CASEINSENSITIVE;
       }
       else if (strcmp(optarg, "numerator") == 0) {
-	criterion = NUMERATOR;
+        criterion = NUMERATOR;
       }
       else {
-	usage(argv[0]);
-	return 1;
+        usage(argv[0]);
+        return 1;
+      }
+      break;
+
+    case 'a':
+      /* algorithm -- should do better error checking */
+      if (strcmp(optarg, "insertion") == 0) {
+        fprintf(stderr, "Insertion sort not yet implemented\n");
+      }
+      else if (strcmp(optarg, "merge") == 0) {
+        sortfunc = mergesort;
+      }
+      else if (strcmp(optarg, "quick") == 0) {
+        sortfunc = qsort;
+      }
+      else if (strcmp(optarg, "heap") == 0) {
+        sortfunc = heapsort;
+      }
+      else {
+        usage(argv[0]);
+        return 1;
       }
       break;
 
@@ -299,7 +324,6 @@ int main(int argc, char *argv[]) {
       /* set reverse mode */
       reverse = 1;
       break;
-
 
     default:
       usage(argv[0]);
@@ -353,58 +377,59 @@ int main(int argc, char *argv[]) {
 
   case NUMERIC:
     if (reverse) {
-      sortfunc = intcmprev;
+      compfunc = intcmprev;
       if (criterion == LENGTH) {
-	sortfunc = intcmpdigitsrev;
+        compfunc = intcmpdigitsrev;
       }
     }
     else {
-      sortfunc = intcmp;
+      compfunc = intcmp;
       if (criterion == LENGTH) {
-	sortfunc = intcmpdigits;
+        compfunc = intcmpdigits;
       }
     }
-    qsort(numbers, items, sizeof(int), sortfunc);
+    (*sortfunc)(numbers, items, sizeof(int), compfunc);
     break;
 
   case STRING:
     if (reverse) {
-      sortfunc = stringcmprev;
+      compfunc = stringcmprev;
       if (criterion == LENGTH) {
-	sortfunc = stringcmplengthrev;
+        compfunc = stringcmplengthrev;
       }
       else if (criterion == CASEINSENSITIVE) {
-	sortfunc = stringcmpnocaserev;
+        compfunc = stringcmpnocaserev;
       }
     }
     else {
-      sortfunc = stringcmp;
+      compfunc = stringcmp;
       if (criterion == LENGTH) {
-	sortfunc = stringcmplength;
+        compfunc = stringcmplength;
       }
       else if (criterion == CASEINSENSITIVE) {
-	sortfunc = stringcmpnocase;
+        compfunc = stringcmpnocase;
       }
     }
 
-    qsort(words, items, sizeof(char *), sortfunc);
+    
+    (*sortfunc)(words, items, sizeof(char *), compfunc);
     break;
 
   case RATIO:
     if (reverse) {
-      sortfunc = ratiocmprev;
+      compfunc = ratiocmprev;
       if (criterion == NUMERATOR) {
-	sortfunc = ratiocmpnumrev;
+        compfunc = ratiocmpnumrev;
       }
     }
     else {
-      sortfunc = ratiocmp;
+      compfunc = ratiocmp;
       if (criterion == NUMERATOR) {
-	sortfunc = ratiocmpnum;
+        compfunc = ratiocmpnum;
       }
     }
 
-    qsort(fractions, items, sizeof(ratio *), sortfunc);
+    (*sortfunc)(fractions, items, sizeof(ratio *), compfunc);
     break;
   }
 
@@ -445,6 +470,9 @@ int main(int argc, char *argv[]) {
       free(fractions[item]);
     }
     break;
+    case NUMERIC:
+      // nothing to do
+      break;
   }
   
   if (infp != stdin) fclose(infp);
