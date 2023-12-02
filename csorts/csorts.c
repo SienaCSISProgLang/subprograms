@@ -17,6 +17,7 @@
 #include <string.h>
 #include <errno.h>
 #include "ratio.h"
+#include "selsort.h"
 
 /* types of data we can sort */
 enum datatypes { NUMERIC, STRING, RATIO };
@@ -31,7 +32,7 @@ enum criteria { DEFAULT, LENGTH, CASEINSENSITIVE, NUMERATOR };
    that something isn't right on the command line */
 static void usage(char *program) {
   printf("Usage: %s [--filename filename] [--datatype numeric|string|ratio] [--reverse]\n", program);
-  printf("[--criteria length|case-insensitive|numerator] [--algorithm insertion|merge|quick|heap]\n");
+  printf("[--criteria length|case-insensitive|numerator] [--algorithm selection|merge|quick|heap]\n");
   printf("[--verbose] [--help]\n");
 }
 
@@ -292,8 +293,8 @@ int main(int argc, char *argv[]) {
 
     case 'a':
       /* algorithm -- should do better error checking */
-      if (strcmp(optarg, "insertion") == 0) {
-        fprintf(stderr, "Insertion sort not yet implemented\n");
+      if (strcmp(optarg, "selection") == 0) {
+        sortfunc = selsort;
       }
       else if (strcmp(optarg, "merge") == 0) {
         sortfunc = mergesort;

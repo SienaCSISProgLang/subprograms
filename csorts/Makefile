@@ -5,7 +5,7 @@
 # CSC 381, The College of Saint Rose
 # Updated for CSIS-340, Siena College
 #
-CFILES=ratio.c gcd.c csorts.c
+CFILES=ratio.c gcd.c csorts.c selsort.c
 OFILES=$(CFILES:.c=.o)
 CC=gcc -g -Wall
 
