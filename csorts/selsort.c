@@ -38,3 +38,26 @@ void selsort(void *base, size_t nmemb, size_t size,
   // free the temporary buffer
   free(temp);
 }
+
+// for comparison, a simpler selection sort implementation that works only on
+// arrays of int and only sorts in ascending order
+void selsort_int(int *base, size_t nmemb) {
+
+  // outer loop: we'll be filling in the sorted portion of the array
+  for (int i = 0; i < nmemb; i++) {
+
+    // find the smallest element in the unsorted portion of the array
+    int smallest = i;
+    for (int j = i+1; j < nmemb; j++) {
+      if (base[j] < base[smallest]) {
+        smallest = j;
+      }
+    }
+
+    // swap the smallest element with the first element of the unsorted
+    // portion of the array
+    int temp = base[i];
+    base[i] = base[smallest];
+    base[smallest] = temp;
+  }
+}
